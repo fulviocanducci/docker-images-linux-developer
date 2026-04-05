@@ -1,1 +1,3 @@
+commando para voltar o backup
+
 docker exec -i mysql mysql -u root -p"770301Ab@" s2milhas < s2-local.sql
