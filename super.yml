@@ -1,0 +1,147 @@
+volumes:
+  redisdb:
+    external: true
+  mongo_data:
+    external: true
+  mongo_config:
+    external: true
+  portainerdb:
+    external: true
+  mysqldb:
+    external: true
+  sqlserverdb:
+    external: true
+  postgresdb:
+    external: true
+
+networks:
+  localnet:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdb:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass "770301Ab@"
+    networks:
+      - localnet
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: "770301Ab@"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - localnet
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainerdb:/data
+    networks:
+      - localnet
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    #command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "770301Ab@"
+      MYSQL_DATABASE: db
+      MYSQL_USER: db
+      MYSQL_PASSWORD: "770301Ab@"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldb:/var/lib/mysql
+    networks:
+      - localnet
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    restart: unless-stopped
+    environment:
+      SA_PASSWORD: "770301Ab@"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserverdb:/var/opt/mssql
+    networks:
+      - localnet
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "770301Ab@"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresdb:/var/lib/postgresql/data
+    networks:
+      - localnet
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 0
+    depends_on:
+      - mysql
+    networks:
+      - localnet
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: "770301Ab@"
+    depends_on:
+      - postgres
+    networks:
+      - localnet 
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "8083:8080"
+    networks:
+      - localnet

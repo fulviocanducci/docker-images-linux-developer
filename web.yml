@@ -1,0 +1,8 @@
+services:
+  webapp:
+    restart: unless-stopped
+    build:
+      context: https://github.com/fulviocanducci/WebAppDocker.git
+      dockerfile: WebAppDocker/Dockerfile
+    ports:
+      - "5000:8080"

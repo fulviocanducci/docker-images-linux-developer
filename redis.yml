@@ -1,0 +1,23 @@
+volumes:
+  redisdb: 
+    external: true
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdb:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass "770301"
+    networks:
+      - localnet
+
+networks:
+  localnet:
+    driver: bridge
