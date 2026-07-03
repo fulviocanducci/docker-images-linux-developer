@@ -13,12 +13,29 @@ volumes:
     external: true
   postgresdb:
     external: true
+  miniodb:
+    external: true
 
 networks:
   localnet:
     driver: bridge
 
 services:
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9900:9000" # API S3
+      - "9901:9001" # Console Web
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - miniodb:/data
+    command: server /data --console-address ":9001"
+
   redis:
     image: redis:7.2
     container_name: redis
