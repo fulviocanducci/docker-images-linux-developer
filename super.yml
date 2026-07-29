@@ -15,12 +15,25 @@ volumes:
     external: true
   miniodb:
     external: true
+  oracledb:
+    external: true
 
 networks:
   localnet:
     driver: bridge
 
 services:
+
+  oracle:
+    image: gvenzl/oracle-free:latest
+    container_name: oracle-free
+    restart: always
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: oracle123
+    volumes:
+      - oracledb:/opt/oracle/oradata
 
   minio:
     image: minio/minio:latest
