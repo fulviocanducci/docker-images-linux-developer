@@ -35,19 +35,19 @@ services:
     volumes:
       - oracledb:/opt/oracle/oradata
 
-  minio:
-    image: minio/minio:latest
-    container_name: minio
-    restart: unless-stopped
-    ports:
-      - "9900:9000" # API S3
-      - "9901:9001" # Console Web
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: admin123
-    volumes:
-      - miniodb:/data
-    command: server /data --console-address ":9001"
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: minio
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9900:9000" # API S3
+  #     - "9901:9001" # Console Web
+  #   environment:
+  #     MINIO_ROOT_USER: admin
+  #     MINIO_ROOT_PASSWORD: admin123
+  #   volumes:
+  #     - miniodb:/data
+  #   command: server /data --console-address ":9001"
 
   redis:
     image: redis:7.2
@@ -79,18 +79,18 @@ services:
     networks:
       - localnet
 
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: always
-    ports:
-      - "9000:9000"
-      - "9443:9443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainerdb:/data
-    networks:
-      - localnet
+  # portainer:
+  #   image: portainer/portainer-ce:latest
+  #   container_name: portainer
+  #   restart: always
+  #   ports:
+  #     - "9000:9000"
+  #     - "9443:9443"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - portainerdb:/data
+  #   networks:
+  #     - localnet
 
   mysql:
     image: mysql:8.4
@@ -141,34 +141,34 @@ services:
     networks:
       - localnet
 
-  phpmyadmin:
-    image: phpmyadmin:5.2
-    container_name: phpmyadmin
-    restart: always
-    ports:
-      - "8081:80"
-    environment:
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      PMA_ARBITRARY: 0
-    depends_on:
-      - mysql
-    networks:
-      - localnet
+  # phpmyadmin:
+  #   image: phpmyadmin:5.2
+  #   container_name: phpmyadmin
+  #   restart: always
+  #   ports:
+  #     - "8081:80"
+  #   environment:
+  #     PMA_HOST: mysql
+  #     PMA_PORT: 3306
+  #     PMA_ARBITRARY: 0
+  #   depends_on:
+  #     - mysql
+  #   networks:
+  #     - localnet
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    restart: always
-    ports:
-      - "8082:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: "770301Ab@"
-    depends_on:
-      - postgres
-    networks:
-      - localnet
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: pgadmin
+  #   restart: always
+  #   ports:
+  #     - "8082:80"
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: "770301Ab@"
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - localnet
 
   adminer:
     image: adminer
