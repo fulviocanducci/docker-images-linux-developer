@@ -1,0 +1,19 @@
+using HttpClient client = new HttpClient();
+
+using MultipartFormDataContent content = new MultipartFormDataContent();
+
+await using FileStream stream = File.OpenRead("modelo.docx");
+
+StreamContent fileContent = new StreamContent(stream);
+
+fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+
+content.Add(fileContent, "file", "modelo.docx");
+
+HttpResponseMessage response = await client.PostAsync("http://libreoffice:8080/convert", content);
+
+response.EnsureSuccessStatusCode();
+
+byte[] pdf = await response.Content.ReadAsByteArrayAsync();
+
+await File.WriteAllBytesAsync("resultado.pdf", pdf);

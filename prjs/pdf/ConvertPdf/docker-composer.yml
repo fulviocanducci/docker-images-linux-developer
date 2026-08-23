@@ -1,0 +1,8 @@
+services:
+  libreoffice:
+    build:
+      context: .
+    container_name: libreoffice-converter
+    restart: unless-stopped
+    ports:
+      - "9874:8080"
