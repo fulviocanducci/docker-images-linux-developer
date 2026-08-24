@@ -1,11 +1,14 @@
-using System.Diagnostics;
+using ConvertPdf.Extensions;
+using ConvertPdf.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddLogging();
 builder.Services.AddHttpLogging();
 builder.Services.AddSingleton(_ => new SemaphoreSlim(1, 1));
+builder.Services.AddSingleton(_ => new AllowedExtensions());
 WebApplication app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
@@ -13,21 +16,35 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 app.UseHttpLogging();
-app.MapPost("api/convert", async (SemaphoreSlim semaphore, [FromServices] ILogger<Program> logger, IFormFile file) =>
+
+app.MapPost("api/convert", async ([FromServices] SemaphoreSlim semaphore, [FromServices] ILogger<Program> logger, [FromServices] AllowedExtensions allowedExtensions, IFormFile file) =>
 {
+    if (file == null)
+    {
+        return Results.BadRequest("File not found");
+    }
+
+    string fileExtension = file.GetFileExtension();
+
+    if (allowedExtensions.NoContains(fileExtension))
+    {
+        return Results.BadRequest("Extension Not Accepted.");
+    }
+
+    string inputDirectory = Path.Combine(Path.GetTempPath(), "input");
+    string outputDirectory = Path.Combine(Path.GetTempPath(), "output");
+    string fileName = $"{Guid.NewGuid()}{fileExtension}";
+    string inputPath = Path.Combine(inputDirectory, fileName);
+    string outputPath = Path.Combine(outputDirectory, Path.ChangeExtension(fileName, ".pdf"));
+
     await semaphore.WaitAsync();
-    logger.LogInformation($"Initialize Process Convert Docx To PDF {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}");
+
+    logger.LogInformation("Initialize Process Convert To PDF {Date}", DateTime.Now);
+
     try
     {
-        string inputDirectory = Path.Combine(Path.GetTempPath(), "input");
-        string outputDirectory = Path.Combine(Path.GetTempPath(), "output");
-
         Directory.CreateDirectory(inputDirectory);
         Directory.CreateDirectory(outputDirectory);
-
-        string fileName = $"{Guid.NewGuid()}.docx";
-        string inputPath = Path.Combine(inputDirectory, fileName);
-        string outputPath = Path.Combine(outputDirectory, Path.ChangeExtension(fileName, ".pdf"));
 
         await using (FileStream stream = File.Create(inputPath))
         {
@@ -53,26 +70,37 @@ app.MapPost("api/convert", async (SemaphoreSlim semaphore, [FromServices] ILogge
 
         if (process.ExitCode != 0 || !File.Exists(outputPath))
         {
-            return Results.Problem($"Erro ao converter DOCX para PDF: {error}");
+            logger.LogError("Error converting {FileExtension} to PDF. ExitCode: {ExitCode}. Error: {Error}", fileExtension, process.ExitCode, error);
+
+            return Results.Problem($"Erro ao converter {fileExtension} para PDF: {error}");
         }
 
         byte[] pdf = await File.ReadAllBytesAsync(outputPath);
 
-        File.Delete(inputPath);
-        File.Delete(outputPath);
+        logger.LogInformation("Finalize Process Convert To PDF {Date}", DateTime.Now);
 
-        logger.LogInformation(@$"Finalize Process Convert Docx To PDF {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}");
         return Results.File(pdf, "application/pdf", "documento.pdf");
     }
-    catch(Exception ex)
+    catch (Exception ex)
     {
-        logger.LogInformation($"Error: {ex.Message} + {ex.InnerException}");
+        logger.LogError(ex, "Error converting {FileExtension} to PDF", fileExtension);
         throw;
     }
     finally
     {
+        if (File.Exists(inputPath))
+        {
+            File.Delete(inputPath);
+        }
+
+        if (File.Exists(outputPath))
+        {
+            File.Delete(outputPath);
+        }
+
         semaphore.Release();
     }
 })
 .DisableAntiforgery();
+
 app.Run();
